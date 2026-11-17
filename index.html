@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f2a44">
+<title>우리 근무표</title>
+<style>
+:root{
+  --bg:#f6f5f1; --card:#ffffff; --ink:#1d2433; --sub:#7b8394; --line:#e6e3da;
+  --navy:#1f2a44; --today:#1f2a44;
+  --day:#f2b53c; --day-t:#4a3200;
+  --night:#4b4aa8; --night-t:#fff;
+  --off:#cfe3d4; --off-t:#24502f;
+  --ilgeun:#7fb3e8; --ilgeun-t:#08305a;
+  --leave:#f0a6b8; --leave-t:#5b1226;
+  --sun:#d6453d; --sat:#3566c9;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#12151d;--card:#1b2030;--ink:#eceef4;--sub:#8b93a7;--line:#2a3144;--navy:#0d1018;--today:#eceef4;
+  --off:#2b4a35;--off-t:#bfe5c9;--ilgeun:#2f5f94;--ilgeun-t:#e0eefc;--leave:#7c3347;--leave-t:#ffe1e9;--sun:#ff7b72;--sat:#7aa2ff}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif}
+body{display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);overflow:hidden}
+header{padding:12px 14px 8px;display:flex;align-items:center;gap:6px}
+.nav{width:40px;height:40px;border:0;border-radius:12px;background:var(--card);color:var(--ink);font-size:20px}
+.title{flex:1;border:0;background:none;color:var(--ink);font-size:24px;font-weight:800;letter-spacing:-.5px;text-align:center}
+.title small{display:block;font-size:12px;font-weight:500;color:var(--sub);letter-spacing:0}
+.bar{display:flex;gap:8px;padding:0 14px 8px;align-items:center;font-size:13px;color:var(--sub)}
+.bar .sp{flex:1}
+.pill{border:0;background:var(--card);color:var(--ink);padding:7px 12px;border-radius:999px;font-size:13px;font-weight:600}
+.wk{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:12px;font-weight:700;padding:0 6px 4px;color:var(--sub)}
+.wk span:first-child{color:var(--sun)} .wk span:last-child{color:var(--sat)}
+.wrap{flex:1;overflow:hidden;padding:0 6px 8px;min-height:0}
+#grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;gap:3px;height:100%;touch-action:pan-y;will-change:transform}
+.cell{background:var(--card);border-radius:10px;padding:4px 3px 3px;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;position:relative;border:1.5px solid transparent}
+.cell.out{opacity:.35}
+.cell.today{border-color:var(--today)}
+.dn{font-size:13px;font-weight:700;line-height:1}
+.cell.sun .dn{color:var(--sun)} .cell.sat .dn{color:var(--sat)}
+.cell.today .dn{background:var(--today);color:var(--card);border-radius:50%;width:20px;height:20px;display:grid;place-items:center}
+.chip{width:100%;font-size:11px;font-weight:700;text-align:center;border-radius:6px;padding:2px 0;line-height:1.25;white-space:nowrap;overflow:hidden}
+.chip i{font-style:normal;font-size:9px;opacity:.8;margin-right:1px}
+.s-주{background:var(--day);color:var(--day-t)} .s-야{background:var(--night);color:var(--night-t)}
+.s-휴{background:var(--off);color:var(--off-t)} .s-일{background:var(--ilgeun);color:var(--ilgeun-t)}
+.s-연차{background:var(--leave);color:var(--leave-t)} .s-x{background:var(--line);color:var(--sub)}
+.chip.ov{outline:1.5px dashed currentColor;outline-offset:-2px}
+.vw{display:flex;background:var(--card);border-radius:999px;padding:3px;gap:2px}
+.vw button{border:0;background:none;color:var(--sub);font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px}
+.vw button.on{background:var(--navy);color:#fff}
+.cell.one .chip{font-size:15px;padding:6px 0;margin-top:2px}
+.cell.one .chip i{display:none}
+.mp{font-size:10px;line-height:1.25;color:var(--sub);width:100%;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;word-break:break-all}
+.dots{display:flex;gap:3px;height:6px;margin-top:auto}
+.dot{width:6px;height:6px;border-radius:50%} .dot.h{background:#e07a2f} .dot.w{background:#d6457f}
+#ov{position:fixed;inset:0;background:rgba(10,14,24,.5);display:none;align-items:flex-end;z-index:10}
+#ov.on{display:flex}
+.sheet{background:var(--card);width:100%;max-height:88%;overflow:auto;border-radius:22px 22px 0 0;padding:18px 18px calc(22px + env(safe-area-inset-bottom,0px));animation:up .2s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+.sheet h2{margin:0 0 12px;font-size:20px}
+.sec{border-top:1px solid var(--line);padding:12px 0}
+.sec:first-of-type{border-top:0}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700}
+.row .chip{width:auto;padding:3px 10px;font-size:13px}
+.row select{margin-left:auto}
+select,input,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+textarea{width:100%;min-height:70px;resize:vertical}
+textarea[readonly]{opacity:.75}
+label{display:block;font-size:13px;color:var(--sub);margin:10px 0 4px}
+input{width:100%}
+.btns{display:flex;gap:8px;margin-top:14px}
+.btn{flex:1;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:700;background:var(--bg);color:var(--ink)}
+.btn.main{background:var(--navy);color:#fff}
+.hint{font-size:12px;color:var(--sub);margin-top:4px;line-height:1.5}
+.seg{display:flex;gap:6px}.seg button{flex:1;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);padding:10px;border-radius:10px;font-weight:700;font-size:14px}
+.seg button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <button class="nav" id="prev" aria-label="이전 달">‹</button>
+  <button class="title" id="title"></button>
+  <button class="nav" id="next" aria-label="다음 달">›</button>
+</header>
+<div class="bar">
+  <div class="vw" id="vw"><button data-v="all">전체</button><button data-v="h">👨 남편</button><button data-v="w">👩 아내</button></div>
+  <span class="sp"></span>
+  <span id="sync">로컬</span>
+  <button class="pill" id="today">오늘</button>
+  <button class="pill" id="gear">설정</button>
+</div>
+<div class="wk"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+<div class="wrap"><div id="grid"></div></div>
+<div id="ov"><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ================= 1) 여기에 Firebase 설정을 붙여넣으세요 ================= */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBO7njJc2fzKsJhEo47Jjb8VhLqhAcCero",
+  authDomain: "routin-4d028.firebaseapp.com",
+  projectId: "routin-4d028",
+  storageBucket: "routin-4d028.firebasestorage.app",
+  messagingSenderId: "1035658675306",
+  appId: "1:1035658675306:web:eecc92756615549e2eb613"
+};
+/* ========================================================================== */
+
+const MINY = 2020, MAXY = 2080;
+const DEF = {hPat:"주주휴휴야야휴휴", hStart:"2026-11-12", wMode:"day", wPat:"주주휴휴야야휴휴", wStart:"2026-11-12"};
+const CLS = {주:"주",야:"야",휴:"휴",일:"일",연차:"연차"};
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2,"0");
+const key = (y,m,d) => `${y}-${pad(m+1)}-${pad(d)}`;
+const dnum = (y,m,d) => Math.floor(Date.UTC(y,m,d)/864e5);
+const parse = s => { const [y,m,d] = s.split("-").map(Number); return dnum(y,m-1,d); };
+
+let S = { cfg:{...DEF}, memos:{}, ovr:{} };
+let me = localStorage.getItem("role") || "";
+let fam = localStorage.getItem("fam") || "";
+let db = null, unsub = null;
+const now = new Date();
+let Y = now.getFullYear(), M = now.getMonth();
+
+try { const l = JSON.parse(localStorage.getItem("shiftS")); if (l) S = {cfg:{...DEF,...l.cfg}, memos:l.memos||{}, ovr:l.ovr||{}}; } catch(e){}
+
+function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("on"); setTimeout(()=>el.classList.remove("on"),1800); }
+function saveLocal(){ try{ localStorage.setItem("shiftS", JSON.stringify(S)); }catch(e){} }
+function cloud(){ return !!db && !!fam; }
+
+/* ---------- 근무 계산 ---------- */
+function shiftOf(who,y,m,d){
+  const k = key(y,m,d), o = S.ovr[k] && S.ovr[k][who];
+  if (o) return {t:o, ov:true};
+  const c = S.cfg;
+  if (who==="w" && c.wMode==="day"){ const w = new Date(y,m,d).getDay(); return {t:(w===0||w===6)?"휴":"일"}; }
+  const pat = [...(who==="h"?c.hPat:c.wPat)];
+  if (!pat.length) return {t:""};
+  const diff = dnum(y,m,d) - parse(who==="h"?c.hStart:c.wStart);
+  return {t: pat[((diff % pat.length)+pat.length)%pat.length]};
+}
+const chip = (who,s) => s.t ? `<div class="chip s-${CLS[s.t]||"x"}${s.ov?" ov":""}"><i>${who==="h"?"남":"아"}</i>${s.t}</div>` : "";
+
+/* ---------- 달력 그리기 ---------- */
+function render(){
+  $("#title").innerHTML = `${Y}년 ${M+1}월<small>${Y}.${pad(M+1)}</small>`.replace(/<small>.*<\/small>/,"");
+  const first = new Date(Y,M,1).getDay(), days = new Date(Y,M+1,0).getDate();
+  const rows = Math.ceil((first+days)/7);
+  const g = $("#grid"); g.style.gridTemplateRows = `repeat(${rows},1fr)`;
+  const t = new Date(); let h = "";
+  for (let i=0;i<rows*7;i++){
+    const dt = new Date(Y,M,1-first+i), y=dt.getFullYear(), m=dt.getMonth(), d=dt.getDate();
+    const out = m!==M, k = key(y,m,d), mm = S.memos[k]||{};
+    const cls = ["cell", out?"out":"", dt.getDay()===0?"sun":"", dt.getDay()===6?"sat":"",
+      (y===t.getFullYear()&&m===t.getMonth()&&d===t.getDate())?"today":""].join(" ");
+    const one = view!=="all", memoTxt = one && mm[view] ? `<div class="mp">${mm[view].replace(/</g,"&lt;")}</div>` : "";
+    h += `<div class="${cls}${one?" one":""}" data-k="${k}"><div class="dn">${d}</div>${show("h")?chip("h",shiftOf("h",y,m,d)):""}${show("w")?chip("w",shiftOf("w",y,m,d)):""}${memoTxt}
+      <div class="dots">${!one&&mm.h?'<span class="dot h"></span>':""}${!one&&mm.w?'<span class="dot w"></span>':""}</div></div>`;
+  }
+  g.innerHTML = h;
+}
+
+/* ---------- 달 이동 + 스와이프 ---------- */
+const grid = $("#grid");
+let busy = false;
+let view = localStorage.getItem("view") || "all";
+const show = w => view==="all" || view===w;
+function go(delta){
+  let ny = Y, nm = M + delta;
+  while (nm<0){nm+=12;ny--} while (nm>11){nm-=12;ny++}
+  if (ny<MINY || ny>MAXY){ toast(`${MINY}~${MAXY}년까지 볼 수 있어요`); grid.style.transform=""; return; }
+  if (busy) return; busy = true;
+  grid.style.transition = "transform .16s ease-in";
+  grid.style.transform = `translateX(${delta>0?-100:100}%)`;
+  setTimeout(()=>{
+    Y=ny; M=nm; render();
+    grid.style.transition="none"; grid.style.transform=`translateX(${delta>0?100:-100}%)`;
+    void grid.offsetWidth;
+    grid.style.transition="transform .2s ease-out"; grid.style.transform="translateX(0)";
+    setTimeout(()=>{grid.style.transition="";busy=false},210);
+  },160);
+}
+let sx=0, sy=0, dx=0, drag=false;
+grid.addEventListener("touchstart",e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;dx=0;drag=true;},{passive:true});
+grid.addEventListener("touchmove",e=>{
+  if(!drag||busy)return; dx=e.touches[0].clientX-sx; const dy=e.touches[0].clientY-sy;
+  if(Math.abs(dx)>Math.abs(dy)){ grid.style.transition="none"; grid.style.transform=`translateX(${dx*.6}px)`; }
+},{passive:true});
+grid.addEventListener("touchend",()=>{
+  if(!drag)return; drag=false;
+  if(Math.abs(dx)>55) go(dx<0?1:-1);
+  else { grid.style.transition="transform .15s"; grid.style.transform=""; }
+});
+$("#prev").onclick=()=>go(-1); $("#next").onclick=()=>go(1);
+$("#today").onclick=()=>{const n=new Date();Y=n.getFullYear();M=n.getMonth();render();};
+window.addEventListener("keydown",e=>{ if(e.key==="ArrowLeft")go(-1); if(e.key==="ArrowRight")go(1); });
+
+/* ---------- 시트(팝업) ---------- */
+const ov = $("#ov"), sheet = $("#sheet");
+const close = () => ov.classList.remove("on");
+ov.addEventListener("click",e=>{ if(e.target===ov) close(); });
+
+function jumpSheet(){
+  let ys="",ms="";
+  for(let y=MINY;y<=MAXY;y++) ys+=`<option ${y===Y?"selected":""}>${y}</option>`;
+  for(let m=1;m<=12;m++) ms+=`<option value="${m-1}" ${m-1===M?"selected":""}>${m}월</option>`;
+  sheet.innerHTML = `<h2>날짜로 이동</h2><div style="display:flex;gap:8px"><select id="jy" style="flex:1">${ys}</select><select id="jm" style="flex:1">${ms}</select></div>
+    <div class="btns"><button class="btn" id="c">닫기</button><button class="btn main" id="ok">이동</button></div>`;
+  $("#c").onclick=close; $("#ok").onclick=()=>{Y=+$("#jy").value;M=+$("#jm").value;render();close();};
+  ov.classList.add("on");
+}
+$("#title").onclick = jumpSheet;
+
+const OPTS = ["주","야","휴","일","연차"];
+function daySheet(k){
+  const [y,m,d] = k.split("-").map(Number), dt = new Date(y,m-1,d);
+  const wk = "일월화수목금토"[dt.getDay()];
+  const mm = S.memos[k]||{}, ovr = S.ovr[k]||{};
+  const part = (who,name,emoji)=>{
+    const s = shiftOf(who,y,m-1,d), mine = me===who;
+    return `<div class="sec"><div class="row">${emoji} ${name}${mine?" (나)":""}
+      <span class="chip s-${CLS[s.t]||"x"}">${s.t||"-"}</span>
+      <select data-sel="${who}"><option value="">자동</option>${OPTS.map(o=>`<option ${ovr[who]===o?"selected":""}>${o}</option>`).join("")}</select></div>
+      <textarea data-memo="${who}" placeholder="${mine?"내 메모를 적어보세요":"메모 없음"}" ${mine?"":"readonly"}>${(mm[who]||"").replace(/</g,"&lt;")}</textarea></div>`;
+  };
+  sheet.innerHTML = `<h2>${m}월 ${d}일 (${wk})</h2>${show("h")?part("h","남편","👨"):""}${show("w")?part("w","아내","👩"):""}
+    <div class="hint">근무 칸에서 연차·맞교대 등으로 그날만 바꿀 수 있어요. 메모는 본인 것만 수정돼요.</div>
+    <div class="btns"><button class="btn" id="c">닫기</button><button class="btn main" id="sv">저장</button></div>`;
+  $("#c").onclick=close;
+  $("#sv").onclick=()=>{
+    const o = {...(S.ovr[k]||{})}, mem = {...(S.memos[k]||{})};
+    ["h","w"].forEach(w=>{ const el=sheet.querySelector(`[data-sel="${w}"]`); if(!el)return; const v=el.value; if(v)o[w]=v; else delete o[w]; });
+    if(me && sheet.querySelector(`[data-memo="${me}"]`)){ mem[me] = sheet.querySelector(`[data-memo="${me}"]`).value.trim(); }
+    if(Object.keys(o).length) S.ovr[k]=o; else delete S.ovr[k];
+    if(mem.h||mem.w) S.memos[k]=mem; else delete S.memos[k];
+    saveLocal(); render(); close(); pushDay(k,o,mem);
+  };
+  ov.classList.add("on");
+}
+grid.addEventListener("click",e=>{ const c=e.target.closest(".cell"); if(c) daySheet(c.dataset.k); });
+
+/* ---------- 설정 ---------- */
+function settingsSheet(first){
+  const c = S.cfg;
+  sheet.innerHTML = `<h2>${first?"처음 설정":"설정"}</h2>
+   <label>나는</label><div class="seg" id="role"><button data-r="h" class="${me==="h"?"on":""}">👨 남편</button><button data-r="w" class="${me==="w"?"on":""}">👩 아내</button></div>
+   <label>가족 코드 (부부 둘이 똑같이 입력 · 비밀번호처럼 길게)</label><input id="fam" value="${fam}" placeholder="예: kim-family-7392" autocapitalize="off">
+   <div class="hint">${db?"입력하면 두 폰이 실시간으로 동기화돼요.":"Firebase 설정 전이라 이 폰에만 저장돼요."}</div>
+   <div class="sec"><b>👨 남편 근무</b>
+   <label>패턴 (주 / 야 / 휴 를 순서대로)</label><input id="hp" value="${c.hPat}">
+   <label>패턴 첫날 (패턴의 첫 글자가 되는 날)</label><input id="hs" type="date" value="${c.hStart}"></div>
+   <div class="sec"><b>👩 아내 근무</b>
+   <div class="seg" id="wm" style="margin-top:8px"><button data-m="day" class="${c.wMode==="day"?"on":""}">일근 (평일)</button><button data-m="shift" class="${c.wMode==="shift"?"on":""}">교대</button></div>
+   <div id="wsh" style="display:${c.wMode==="shift"?"block":"none"}">
+   <label>패턴</label><input id="wp" value="${c.wPat}"><label>패턴 첫날</label><input id="ws" type="date" value="${c.wStart}"></div></div>
+   <div class="btns"><button class="btn" id="c">닫기</button><button class="btn main" id="sv">저장</button></div>`;
+  let role=me, wm=c.wMode;
+  sheet.querySelectorAll("#role button").forEach(b=>b.onclick=()=>{role=b.dataset.r;sheet.querySelectorAll("#role button").forEach(x=>x.classList.toggle("on",x===b));});
+  sheet.querySelectorAll("#wm button").forEach(b=>b.onclick=()=>{wm=b.dataset.m;sheet.querySelectorAll("#wm button").forEach(x=>x.classList.toggle("on",x===b));$("#wsh").style.display=wm==="shift"?"block":"none";});
+  $("#c").onclick=()=>{ if(me) close(); };
+  $("#sv").onclick=()=>{
+    if(!role){toast("남편/아내를 선택해주세요");return;}
+    me=role; localStorage.setItem("role",me);
+    const nf=$("#fam").value.trim(); if(nf!==fam){ fam=nf; localStorage.setItem("fam",fam); connect(); }
+    S.cfg = {hPat:$("#hp").value.trim()||DEF.hPat, hStart:$("#hs").value||DEF.hStart, wMode:wm,
+             wPat:($("#wp")&&$("#wp").value.trim())||c.wPat, wStart:($("#ws")&&$("#ws").value)||c.wStart};
+    saveLocal(); render(); close(); pushCfg(); toast("저장했어요");
+  };
+  ov.classList.add("on");
+}
+$("#gear").onclick=()=>settingsSheet(false);
+
+/* ---------- Firebase 동기화 ---------- */
+function ref(){ return db.collection("families").doc(fam); }
+function pushCfg(){ if(cloud()) ref().set({cfg:S.cfg},{merge:true}).catch(err=>toast("동기화 실패: "+err.code)); }
+function pushDay(k,o,mem){
+  if(!cloud()) return;
+  const upd = {}; upd["ovr."+k] = Object.keys(o).length ? o : firebase.firestore.FieldValue.delete();
+  upd["memos."+k] = (mem.h||mem.w) ? mem : firebase.firestore.FieldValue.delete();
+  ref().set({ovr:{},memos:{}},{merge:true}).then(()=>ref().update(upd)).catch(err=>toast("동기화 실패: "+err.code));
+}
+function connect(){
+  if(unsub){unsub();unsub=null;}
+  if(!db||!fam){ $("#sync").textContent="로컬"; return; }
+  $("#sync").textContent="연결 중…";
+  unsub = ref().onSnapshot(snap=>{
+    $("#sync").textContent = "● 동기화됨";
+    if(snap.exists){
+      const d = snap.data();
+      S = {cfg:{...DEF,...(d.cfg||{})}, memos:d.memos||{}, ovr:d.ovr||{}};
+      saveLocal(); render();
+    } else { pushCfg(); }
+  },err=>{ $("#sync").textContent="오류"; toast("연결 실패: "+err.code); });
+}
+try{
+  if(!FIREBASE_CONFIG.apiKey.startsWith("YOUR")){
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    db.enablePersistence && db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+  }
+}catch(e){ console.error(e); }
+
+function syncView(){ document.querySelectorAll("#vw button").forEach(b=>b.classList.toggle("on",b.dataset.v===view)); }
+document.querySelectorAll("#vw button").forEach(b=>b.onclick=()=>{ view=b.dataset.v; localStorage.setItem("view",view); syncView(); render(); });
+syncView(); render(); connect();
+if(!me) settingsSheet(true);
+if("serviceWorker" in navigator && false) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
