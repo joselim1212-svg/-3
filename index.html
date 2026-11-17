@@ -129,7 +129,8 @@ const parse = s => { const [y,m,d] = s.split("-").map(Number); return dnum(y,m-1
 let S = { cfg:{...DEF}, memos:{}, ovr:{} };
 let me = localStorage.getItem("role") || "";
 let fam = localStorage.getItem("fam") || "";
-let db = null, unsub = null;
+let db = null, unsub = null, lastErr = "", fromCache = true;
+function setSync(t,err){ $("#sync").textContent=t; if(err!==undefined) lastErr=err; }
 const now = new Date();
 let Y = now.getFullYear(), M = now.getMonth();
 
@@ -283,26 +284,39 @@ $("#gear").onclick=()=>settingsSheet(false);
 
 /* ---------- Firebase 동기화 ---------- */
 function ref(){ return db.collection("families").doc(fam); }
-function pushCfg(){ if(cloud()) ref().set({cfg:S.cfg},{merge:true}).catch(err=>toast("동기화 실패: "+err.code)); }
+const fail = err => { setSync("⚠ 오류", err.code||String(err)); toast("동기화 실패: "+(err.code||err)); };
+function pushCfg(){ if(cloud()) ref().set({cfg:S.cfg},{merge:true}).catch(fail); }
 function pushDay(k,o,mem){
   if(!cloud()) return;
   const upd = {}; upd["ovr."+k] = Object.keys(o).length ? o : firebase.firestore.FieldValue.delete();
   upd["memos."+k] = (mem.h||mem.w) ? mem : firebase.firestore.FieldValue.delete();
-  ref().set({ovr:{},memos:{}},{merge:true}).then(()=>ref().update(upd)).catch(err=>toast("동기화 실패: "+err.code));
+  ref().set({ovr:{},memos:{}},{merge:true}).then(()=>ref().update(upd)).catch(fail);
 }
 function connect(){
   if(unsub){unsub();unsub=null;}
-  if(!db||!fam){ $("#sync").textContent="로컬"; return; }
-  $("#sync").textContent="연결 중…";
-  unsub = ref().onSnapshot(snap=>{
-    $("#sync").textContent = "● 동기화됨";
-    if(snap.exists){
+  if(!db||!fam){ setSync(db?"가족코드 없음":"로컬(Firebase 미연결)",""); return; }
+  setSync("연결 중…","");
+  const timer = setTimeout(()=>{ if(fromCache) setSync("⚠ 서버 연결 안 됨", lastErr||"10초 안에 서버 응답이 없어요"); },10000);
+  unsub = ref().onSnapshot({includeMetadataChanges:true}, snap=>{
+    fromCache = snap.metadata.fromCache;
+    if(fromCache){ if(!lastErr) setSync("연결 중…"); }
+    else { clearTimeout(timer); setSync("● 동기화됨",""); }
+    if(snap.exists && !snap.metadata.hasPendingWrites){
       const d = snap.data();
       S = {cfg:{...DEF,...(d.cfg||{})}, memos:d.memos||{}, ovr:d.ovr||{}};
       saveLocal(); render();
-    } else { pushCfg(); }
-  },err=>{ $("#sync").textContent="오류"; toast("연결 실패: "+err.code); });
+    } else if(!snap.exists && !fromCache){ pushCfg(); }
+  },err=>{ fail(err); });
 }
+$("#sync").onclick=()=>{
+  sheet.innerHTML=`<h2>동기화 상태</h2><div class="hint" style="font-size:14px;line-height:1.8">
+   상태: <b>${$("#sync").textContent}</b><br>가족 코드: <b>${fam||"(없음)"}</b><br>오류 코드: <b>${lastErr||"없음"}</b><br>
+   프로젝트: <b>${FIREBASE_CONFIG.projectId}</b></div>
+   <div class="hint">permission-denied → Firestore 규칙을 게시하지 않은 거예요.<br>unavailable / 서버 연결 안 됨 → 인터넷 또는 Firestore 데이터베이스 생성을 확인하세요.<br>두 폰의 가족 코드는 대소문자까지 똑같아야 해요.</div>
+   <div class="btns"><button class="btn" id="c">닫기</button><button class="btn main" id="rc">다시 연결</button></div>`;
+  $("#c").onclick=close; $("#rc").onclick=()=>{close();lastErr="";connect();};
+  ov.classList.add("on");
+};
 try{
   if(!FIREBASE_CONFIG.apiKey.startsWith("YOUR")){
     firebase.initializeApp(FIREBASE_CONFIG);
