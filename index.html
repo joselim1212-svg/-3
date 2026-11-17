@@ -14,11 +14,11 @@
   --off:#cfe3d4; --off-t:#24502f;
   --ilgeun:#7fb3e8; --ilgeun-t:#08305a;
   --leave:#f0a6b8; --leave-t:#5b1226;
-  --sun:#d6453d; --sat:#3566c9;
+  --rest:#e0405a;--sun:#d6453d; --sat:#3566c9;
 }
 @media (prefers-color-scheme:dark){
   :root{--bg:#12151d;--card:#1b2030;--ink:#eceef4;--sub:#8b93a7;--line:#2a3144;--navy:#0d1018;--today:#eceef4;
-  --off:#2b4a35;--off-t:#bfe5c9;--ilgeun:#2f5f94;--ilgeun-t:#e0eefc;--leave:#7c3347;--leave-t:#ffe1e9;--sun:#ff7b72;--sat:#7aa2ff}
+  --off:#2b4a35;--off-t:#bfe5c9;--ilgeun:#2f5f94;--ilgeun-t:#e0eefc;--leave:#7c3347;--leave-t:#ffe1e9;--rest:#ff7a93;--sun:#ff7b72;--sat:#7aa2ff}
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif}
@@ -40,18 +40,25 @@ header{padding:12px 14px 8px;display:flex;align-items:center;gap:6px}
 .dn{font-size:13px;font-weight:700;line-height:1}
 .cell.sun .dn{color:var(--sun)} .cell.sat .dn{color:var(--sat)}
 .cell.today .dn{background:var(--today);color:var(--card);border-radius:50%;width:20px;height:20px;display:grid;place-items:center}
-.chip{width:100%;font-size:11px;font-weight:700;text-align:center;border-radius:6px;padding:2px 0;line-height:1.25;white-space:nowrap;overflow:hidden}
-.chip i{font-style:normal;font-size:9px;opacity:.8;margin-right:1px}
-.s-주{background:var(--day);color:var(--day-t)} .s-야{background:var(--night);color:var(--night-t)}
-.s-휴{background:var(--off);color:var(--off-t)} .s-일{background:var(--ilgeun);color:var(--ilgeun-t)}
-.s-연차{background:var(--leave);color:var(--leave-t)} .s-x{background:var(--line);color:var(--sub)}
-.chip.ov{outline:1.5px dashed currentColor;outline-offset:-2px}
 .vw{display:flex;background:var(--card);border-radius:999px;padding:3px;gap:2px}
 .vw button{border:0;background:none;color:var(--sub);font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px}
 .vw button.on{background:var(--navy);color:#fff}
-.cell.one .chip{font-size:15px;padding:6px 0;margin-top:2px}
-.cell.one .chip i{display:none}
-.mp{font-size:10px;line-height:1.25;color:var(--sub);width:100%;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;word-break:break-all}
+.mp{font-size:10px;line-height:1.5;width:calc(100% + 6px);margin:auto -3px 0;background:#3b3b3b;color:#fff;padding:1px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.sh{display:flex;align-items:center;justify-content:center;gap:3px;width:100%;margin-top:2px}
+.sh i{font-style:normal;font-size:9px;color:var(--sub)}
+.c{display:grid;place-items:center;flex:none;width:26px;height:26px;border-radius:50%;font-size:12px;font-weight:800;line-height:1}
+.cell.one .c{width:38px;height:38px;font-size:17px}
+.cell.one .sh{margin-top:6px}
+.cell.one .sh i{display:none}
+.s-주{background:#ffd400;color:#3a2d00}
+.s-야{background:#3b3b3b;color:#fff}
+.s-휴{background:none;color:var(--rest)}
+.s-일{background:#8ec1f0;color:#08305a}
+.s-연차{background:#f4a9bb;color:#5b1226;font-size:10px}
+.s-x{background:var(--line);color:var(--sub)}
+.c.ov{outline:2px dashed var(--sub);outline-offset:1px}
+.c.s-휴.ov{outline:0;text-decoration:underline dotted}
+.row .c{width:30px;height:30px;font-size:14px}
 .dots{display:flex;gap:3px;height:6px;margin-top:auto}
 .dot{width:6px;height:6px;border-radius:50%} .dot.h{background:#e07a2f} .dot.w{background:#d6457f}
 #ov{position:fixed;inset:0;background:rgba(10,14,24,.5);display:none;align-items:flex-end;z-index:10}
@@ -62,7 +69,6 @@ header{padding:12px 14px 8px;display:flex;align-items:center;gap:6px}
 .sec{border-top:1px solid var(--line);padding:12px 0}
 .sec:first-of-type{border-top:0}
 .row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700}
-.row .chip{width:auto;padding:3px 10px;font-size:13px}
 .row select{margin-left:auto}
 select,input,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 textarea{width:100%;min-height:70px;resize:vertical}
@@ -144,7 +150,7 @@ function shiftOf(who,y,m,d){
   const diff = dnum(y,m,d) - parse(who==="h"?c.hStart:c.wStart);
   return {t: pat[((diff % pat.length)+pat.length)%pat.length]};
 }
-const chip = (who,s) => s.t ? `<div class="chip s-${CLS[s.t]||"x"}${s.ov?" ov":""}"><i>${who==="h"?"남":"아"}</i>${s.t}</div>` : "";
+const chip = (who,s) => s.t ? `<div class="sh"><i>${who==="h"?"남":"아"}</i><span class="c s-${CLS[s.t]||"x"}${s.ov?" ov":""}">${s.t}</span></div>` : "";
 
 /* ---------- 달력 그리기 ---------- */
 function render(){
@@ -224,7 +230,7 @@ function daySheet(k){
   const part = (who,name,emoji)=>{
     const s = shiftOf(who,y,m-1,d), mine = me===who;
     return `<div class="sec"><div class="row">${emoji} ${name}${mine?" (나)":""}
-      <span class="chip s-${CLS[s.t]||"x"}">${s.t||"-"}</span>
+      <span class="c s-${CLS[s.t]||"x"}">${s.t||"-"}</span>
       <select data-sel="${who}"><option value="">자동</option>${OPTS.map(o=>`<option ${ovr[who]===o?"selected":""}>${o}</option>`).join("")}</select></div>
       <textarea data-memo="${who}" placeholder="${mine?"내 메모를 적어보세요":"메모 없음"}" ${mine?"":"readonly"}>${(mm[who]||"").replace(/</g,"&lt;")}</textarea></div>`;
   };
