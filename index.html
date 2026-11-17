@@ -240,12 +240,27 @@ function daySheet(k){
     <div class="btns"><button class="btn" id="c">닫기</button><button class="btn main" id="sv">저장</button></div>`;
   $("#c").onclick=close;
   $("#sv").onclick=()=>{
-    const o = {...(S.ovr[k]||{})}, mem = {...(S.memos[k]||{})};
-    ["h","w"].forEach(w=>{ const el=sheet.querySelector(`[data-sel="${w}"]`); if(!el)return; const v=el.value; if(v)o[w]=v; else delete o[w]; });
-    if(me && sheet.querySelector(`[data-memo="${me}"]`)){ mem[me] = sheet.querySelector(`[data-memo="${me}"]`).value.trim(); }
-    if(Object.keys(o).length) S.ovr[k]=o; else delete S.ovr[k];
-    if(mem.h||mem.w) S.memos[k]=mem; else delete S.memos[k];
-    saveLocal(); render(); close(); pushDay(k,o,mem);
+    const ups = {};            // 바뀐 칸만 서버에 보냄 (상대방 것을 덮어쓰지 않도록)
+    ["h","w"].forEach(w=>{
+      const el = sheet.querySelector(`[data-sel="${w}"]`); if(!el) return;
+      const oldV = (S.ovr[k]&&S.ovr[k][w])||"", v = el.value;
+      if(v===oldV) return;
+      S.ovr[k] = S.ovr[k]||{};
+      if(v) S.ovr[k][w]=v; else delete S.ovr[k][w];
+      ups[`ovr.${k}.${w}`] = v||null;
+    });
+    const mel = me && sheet.querySelector(`[data-memo="${me}"]`);
+    if(mel){
+      const t = mel.value.trim(), oldT = (S.memos[k]&&S.memos[k][me])||"";
+      if(t!==oldT){
+        S.memos[k] = S.memos[k]||{};
+        if(t) S.memos[k][me]=t; else delete S.memos[k][me];
+        ups[`memos.${k}.${me}`] = t||null;
+      }
+    }
+    if(S.ovr[k] && !Object.keys(S.ovr[k]).length) delete S.ovr[k];
+    if(S.memos[k] && !Object.keys(S.memos[k]).length) delete S.memos[k];
+    saveLocal(); render(); close(); pushDay(ups);
   };
   ov.classList.add("on");
 }
@@ -286,10 +301,11 @@ $("#gear").onclick=()=>settingsSheet(false);
 function ref(){ return db.collection("families").doc(fam); }
 const fail = err => { setSync("⚠ 오류", err.code||String(err)); toast("동기화 실패: "+(err.code||err)); };
 function pushCfg(){ if(cloud()) ref().set({cfg:S.cfg},{merge:true}).catch(fail); }
-function pushDay(k,o,mem){
+function pushDay(ups){
   if(!cloud()) return;
-  const upd = {}; upd["ovr."+k] = Object.keys(o).length ? o : firebase.firestore.FieldValue.delete();
-  upd["memos."+k] = (mem.h||mem.w) ? mem : firebase.firestore.FieldValue.delete();
+  const upd = {};
+  for(const p in ups) upd[p] = ups[p]===null ? firebase.firestore.FieldValue.delete() : ups[p];
+  if(!Object.keys(upd).length) return;
   ref().set({ovr:{},memos:{}},{merge:true}).then(()=>ref().update(upd)).catch(fail);
 }
 function connect(){
