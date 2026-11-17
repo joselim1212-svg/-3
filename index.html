@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1f2a44">
 <title>우리 근무표</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <style>
 :root{
   --bg:#f6f5f1; --card:#ffffff; --ink:#1d2433; --sub:#7b8394; --line:#e6e3da;
@@ -117,6 +118,7 @@ const FIREBASE_CONFIG = {
 };
 /* ========================================================================== */
 
+const VER = "v6";
 const MINY = 2020, MAXY = 2080;
 const DEF = {hPat:"주주휴휴야야휴휴", hStart:"2026-11-12", wMode:"day", wPat:"주주휴휴야야휴휴", wStart:"2026-11-12"};
 const CLS = {주:"주",야:"야",휴:"휴",일:"일",연차:"연차"};
@@ -236,7 +238,7 @@ function daySheet(k){
       <textarea data-memo="${who}" placeholder="${mine?"내 메모를 적어보세요":"메모 없음"}" ${mine?"":"readonly"}>${(mm[who]||"").replace(/</g,"&lt;")}</textarea></div>`;
   };
   sheet.innerHTML = `<h2>${m}월 ${d}일 (${wk})</h2>${show("h")?part("h","남편","👨"):""}${show("w")?part("w","아내","👩"):""}
-    <div class="hint">근무 칸에서 연차·맞교대 등으로 그날만 바꿀 수 있어요. 메모는 본인 것만 수정돼요.</div>
+    <div class="hint">이 폰의 역할: <b>${me==="h"?"👨 남편":me==="w"?"👩 아내":"미선택"}</b> · 메모는 (나)로 표시된 칸만 수정돼요.<br>근무 칸에서 연차·맞교대 등으로 그날만 바꿀 수 있어요. 메모는 본인 것만 수정돼요.</div>
     <div class="btns"><button class="btn" id="c">닫기</button><button class="btn main" id="sv">저장</button></div>`;
   $("#c").onclick=close;
   $("#sv").onclick=()=>{
@@ -332,7 +334,7 @@ function connect(){
 $("#sync").onclick=()=>{
   sheet.innerHTML=`<h2>동기화 상태</h2><div class="hint" style="font-size:14px;line-height:1.8">
    상태: <b>${$("#sync").textContent}</b><br>가족 코드: <b>${fam||"(없음)"}</b><br>오류 코드: <b>${lastErr||"없음"}</b><br>
-   프로젝트: <b>${FIREBASE_CONFIG.projectId}</b></div>
+   프로젝트: <b>${FIREBASE_CONFIG.projectId}</b><br>앱 버전: <b>${VER}</b><br>이 폰의 역할: <b>${me==="h"?"👨 남편":me==="w"?"👩 아내":"(미선택)"}</b></div>
    <div class="hint">permission-denied → Firestore 규칙을 게시하지 않은 거예요.<br>unavailable / 서버 연결 안 됨 → 인터넷 또는 Firestore 데이터베이스 생성을 확인하세요.<br>두 폰의 가족 코드는 대소문자까지 똑같아야 해요.</div>
    <div class="btns"><button class="btn" id="c">닫기</button><button class="btn main" id="rc">다시 연결</button></div>`;
   $("#c").onclick=close; $("#rc").onclick=()=>{close();lastErr="";connect();};
