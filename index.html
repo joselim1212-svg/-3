@@ -303,10 +303,15 @@ const fail = err => { setSync("⚠ 오류", err.code||String(err)); toast("동�
 function pushCfg(){ if(cloud()) ref().set({cfg:S.cfg},{merge:true}).catch(fail); }
 function pushDay(ups){
   if(!cloud()) return;
-  const upd = {};
-  for(const p in ups) upd[p] = ups[p]===null ? firebase.firestore.FieldValue.delete() : ups[p];
-  if(!Object.keys(upd).length) return;
-  ref().set({ovr:{},memos:{}},{merge:true}).then(()=>ref().update(upd)).catch(fail);
+  // 바뀐 칸만 담은 중첩 객체를 만들어 merge 저장 (빈 객체를 보내면 기존 데이터가 지워지므로 쓰지 않음)
+  const root = {};
+  for(const p in ups){
+    const [top,date,who] = p.split(".");
+    root[top] = root[top]||{}; root[top][date] = root[top][date]||{};
+    root[top][date][who] = ups[p]===null ? firebase.firestore.FieldValue.delete() : ups[p];
+  }
+  if(!Object.keys(root).length) return;
+  ref().set(root,{merge:true}).catch(fail);
 }
 function connect(){
   if(unsub){unsub();unsub=null;}
