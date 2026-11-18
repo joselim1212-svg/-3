@@ -15,11 +15,11 @@
   --off:#cfe3d4; --off-t:#24502f;
   --ilgeun:#7fb3e8; --ilgeun-t:#08305a;
   --leave:#f0a6b8; --leave-t:#5b1226;
-  --rest:#e0405a;--sun:#d6453d; --sat:#3566c9;
+  --rest:#e0405a;--holbg:#ffd3d3;--sun:#d6453d; --sat:#3566c9;
 }
 @media (prefers-color-scheme:dark){
   :root{--bg:#12151d;--card:#1b2030;--ink:#eceef4;--sub:#8b93a7;--line:#2a3144;--navy:#0d1018;--today:#eceef4;
-  --off:#2b4a35;--off-t:#bfe5c9;--ilgeun:#2f5f94;--ilgeun-t:#e0eefc;--leave:#7c3347;--leave-t:#ffe1e9;--rest:#ff7a93;--sun:#ff7b72;--sat:#7aa2ff}
+  --off:#2b4a35;--off-t:#bfe5c9;--ilgeun:#2f5f94;--ilgeun-t:#e0eefc;--leave:#7c3347;--leave-t:#ffe1e9;--rest:#ff7a93;--holbg:rgba(255,122,114,.25);--sun:#ff7b72;--sat:#7aa2ff}
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif}
@@ -41,7 +41,9 @@ header{padding:12px 14px 8px;display:flex;align-items:center;gap:6px}
 .dn{font-size:13px;font-weight:700;line-height:1}
 .cell.sun .dn{color:var(--sun)} .cell.sat .dn{color:var(--sat)}
 .cell.hol .dn{color:var(--sun)}
-.hn{font-size:8.5px;font-weight:700;color:var(--sun);line-height:1;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-top:-1px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:2px;width:calc(100% + 6px);margin:-4px -3px 1px;padding:3px 4px;min-height:25px;border-radius:8px 8px 0 0}
+.cell.hol .top{background:var(--holbg)}
+.hn{font-size:8px;font-weight:700;color:var(--sun);opacity:.85;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .cell.today .dn{background:var(--today);color:var(--card);border-radius:50%;width:20px;height:20px;display:grid;place-items:center}
 .vw{display:flex;background:var(--card);border-radius:999px;padding:3px;gap:2px}
 .vw button{border:0;background:none;color:var(--sub);font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px}
@@ -63,7 +65,7 @@ header{padding:12px 14px 8px;display:flex;align-items:center;gap:6px}
 .c.s-휴.ov{outline:0;text-decoration:underline dotted}
 .row .c{width:30px;height:30px;font-size:14px}
 .dots{display:flex;gap:3px;height:6px;margin-top:auto}
-.dot{width:6px;height:6px;border-radius:50%} .dot.h{background:#e07a2f} .dot.w{background:#d6457f}
+.dot{width:6px;height:6px;border-radius:50%} .dot.h{background:#e07a2f} .dot.w{background:#2f7bf5}
 #ov{position:fixed;inset:0;background:rgba(10,14,24,.5);display:none;align-items:flex-end;z-index:10}
 #ov.on{display:flex}
 .sheet{background:var(--card);width:100%;max-height:88%;overflow:auto;border-radius:22px 22px 0 0;padding:18px 18px calc(22px + env(safe-area-inset-bottom,0px));animation:up .2s ease-out}
@@ -120,7 +122,7 @@ const FIREBASE_CONFIG = {
 };
 /* ========================================================================== */
 
-const VER = "v7";
+const VER = "v8";
 /* 공휴일 (2026~2027, 대체공휴일 포함) */
 const HOL = {
  "2026-01-01":"신정",
@@ -195,7 +197,7 @@ function render(){
     const cls = ["cell", out?"out":"", dt.getDay()===0?"sun":"", dt.getDay()===6?"sat":"",
       (y===t.getFullYear()&&m===t.getMonth()&&d===t.getDate())?"today":"", HOL[k]?"hol":""].join(" ");
     const one = view!=="all", memoTxt = one && mm[view] ? `<div class="mp">${mm[view].replace(/</g,"&lt;")}</div>` : "";
-    h += `<div class="${cls}${one?" one":""}" data-k="${k}"><div class="dn">${d}</div>${HOL[k]?`<div class="hn">${HOL[k]}</div>`:""}${show("h")?chip("h",shiftOf("h",y,m,d)):""}${show("w")?chip("w",shiftOf("w",y,m,d)):""}${memoTxt}
+    h += `<div class="${cls}${one?" one":""}" data-k="${k}"><div class="top"><div class="dn">${d}</div>${HOL[k]?`<span class="hn">${HOL[k]}</span>`:""}</div>${show("h")?chip("h",shiftOf("h",y,m,d)):""}${show("w")?chip("w",shiftOf("w",y,m,d)):""}${memoTxt}
       <div class="dots">${!one&&mm.h?'<span class="dot h"></span>':""}${!one&&mm.w?'<span class="dot w"></span>':""}</div></div>`;
   }
   g.innerHTML = h;
