@@ -40,6 +40,8 @@ header{padding:12px 14px 8px;display:flex;align-items:center;gap:6px}
 .cell.today{border-color:var(--today)}
 .dn{font-size:13px;font-weight:700;line-height:1}
 .cell.sun .dn{color:var(--sun)} .cell.sat .dn{color:var(--sat)}
+.cell.hol .dn{color:var(--sun)}
+.hn{font-size:8.5px;font-weight:700;color:var(--sun);line-height:1;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-top:-1px}
 .cell.today .dn{background:var(--today);color:var(--card);border-radius:50%;width:20px;height:20px;display:grid;place-items:center}
 .vw{display:flex;background:var(--card);border-radius:999px;padding:3px;gap:2px}
 .vw button{border:0;background:none;color:var(--sub);font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px}
@@ -118,7 +120,32 @@ const FIREBASE_CONFIG = {
 };
 /* ========================================================================== */
 
-const VER = "v6";
+const VER = "v7";
+/* 공휴일 (2026~2027, 대체공휴일 포함) */
+const HOL = {
+ "2026-01-01":"신정",
+ "2026-02-16":"설연휴","2026-02-17":"설날","2026-02-18":"설연휴",
+ "2026-03-01":"삼일절","2026-03-02":"대체휴일",
+ "2026-05-01":"노동절","2026-05-05":"어린이날",
+ "2026-05-24":"부처님날","2026-05-25":"대체휴일",
+ "2026-06-03":"지방선거","2026-06-06":"현충일",
+ "2026-07-17":"제헌절",
+ "2026-08-15":"광복절","2026-08-17":"대체휴일",
+ "2026-09-24":"추석연휴","2026-09-25":"추석","2026-09-26":"추석연휴",
+ "2026-10-03":"개천절","2026-10-05":"대체휴일",
+ "2026-10-09":"한글날","2026-12-25":"성탄절",
+ "2027-01-01":"신정",
+ "2027-02-06":"설연휴","2027-02-07":"설날","2027-02-08":"설연휴","2027-02-09":"대체휴일",
+ "2027-03-01":"삼일절",
+ "2027-05-01":"노동절","2027-05-03":"대체휴일","2027-05-05":"어린이날","2027-05-13":"부처님날",
+ "2027-06-06":"현충일",
+ "2027-07-17":"제헌절","2027-07-19":"대체휴일",
+ "2027-08-15":"광복절","2027-08-16":"대체휴일",
+ "2027-09-14":"추석연휴","2027-09-15":"추석","2027-09-16":"추석연휴",
+ "2027-10-03":"개천절","2027-10-04":"대체휴일",
+ "2027-10-09":"한글날","2027-10-11":"대체휴일",
+ "2027-12-25":"성탄절","2027-12-27":"대체휴일"
+};
 const MINY = 2020, MAXY = 2080;
 const DEF = {hPat:"주주휴휴야야휴휴", hStart:"2026-11-12", wMode:"day", wPat:"주주휴휴야야휴휴", wStart:"2026-11-12"};
 const CLS = {주:"주",야:"야",휴:"휴",일:"일",연차:"연차"};
@@ -166,9 +193,9 @@ function render(){
     const dt = new Date(Y,M,1-first+i), y=dt.getFullYear(), m=dt.getMonth(), d=dt.getDate();
     const out = m!==M, k = key(y,m,d), mm = S.memos[k]||{};
     const cls = ["cell", out?"out":"", dt.getDay()===0?"sun":"", dt.getDay()===6?"sat":"",
-      (y===t.getFullYear()&&m===t.getMonth()&&d===t.getDate())?"today":""].join(" ");
+      (y===t.getFullYear()&&m===t.getMonth()&&d===t.getDate())?"today":"", HOL[k]?"hol":""].join(" ");
     const one = view!=="all", memoTxt = one && mm[view] ? `<div class="mp">${mm[view].replace(/</g,"&lt;")}</div>` : "";
-    h += `<div class="${cls}${one?" one":""}" data-k="${k}"><div class="dn">${d}</div>${show("h")?chip("h",shiftOf("h",y,m,d)):""}${show("w")?chip("w",shiftOf("w",y,m,d)):""}${memoTxt}
+    h += `<div class="${cls}${one?" one":""}" data-k="${k}"><div class="dn">${d}</div>${HOL[k]?`<div class="hn">${HOL[k]}</div>`:""}${show("h")?chip("h",shiftOf("h",y,m,d)):""}${show("w")?chip("w",shiftOf("w",y,m,d)):""}${memoTxt}
       <div class="dots">${!one&&mm.h?'<span class="dot h"></span>':""}${!one&&mm.w?'<span class="dot w"></span>':""}</div></div>`;
   }
   g.innerHTML = h;
@@ -237,7 +264,7 @@ function daySheet(k){
       <select data-sel="${who}"><option value="">자동</option>${OPTS.map(o=>`<option ${ovr[who]===o?"selected":""}>${o}</option>`).join("")}</select></div>
       <textarea data-memo="${who}" placeholder="${mine?"내 메모를 적어보세요":"메모 없음"}" ${mine?"":"readonly"}>${(mm[who]||"").replace(/</g,"&lt;")}</textarea></div>`;
   };
-  sheet.innerHTML = `<h2>${m}월 ${d}일 (${wk})</h2>${show("h")?part("h","남편","👨"):""}${show("w")?part("w","아내","👩"):""}
+  sheet.innerHTML = `<h2>${m}월 ${d}일 (${wk})${HOL[k]?` <span style="color:var(--sun);font-size:15px">· ${HOL[k]}</span>`:""}</h2>${show("h")?part("h","남편","👨"):""}${show("w")?part("w","아내","👩"):""}
     <div class="hint">이 폰의 역할: <b>${me==="h"?"👨 남편":me==="w"?"👩 아내":"미선택"}</b> · 메모는 (나)로 표시된 칸만 수정돼요.<br>근무 칸에서 연차·맞교대 등으로 그날만 바꿀 수 있어요. 메모는 본인 것만 수정돼요.</div>
     <div class="btns"><button class="btn" id="c">닫기</button><button class="btn main" id="sv">저장</button></div>`;
   $("#c").onclick=close;
